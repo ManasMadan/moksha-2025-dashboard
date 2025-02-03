@@ -1,14 +1,19 @@
 "use server";
 
+import { getMyServerSession } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
+import { hasPermission } from "@/lib/permissions";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 
 export async function getUsers() {
   try {
-    await connectDB();
+    const session = await getMyServerSession();
+    if (!hasPermission(session.user, "users", "list"))
+      throw new Error("Unauthorized");
 
+    await connectDB();
     const users = await User.find({}).select("-password");
     return { success: true, data: JSON.stringify(users) };
   } catch (error) {
@@ -18,6 +23,9 @@ export async function getUsers() {
 
 export async function getUser(userId: string) {
   try {
+    const session = await getMyServerSession();
+    if (!hasPermission(session.user, "users", "view"))
+      throw new Error("Unauthorized");
     await connectDB();
 
     const user = await User.findById(userId).select("-password");
@@ -33,6 +41,10 @@ export async function getUser(userId: string) {
 
 export async function addUser(formData: FormData) {
   try {
+    const session = await getMyServerSession();
+    if (!hasPermission(session.user, "users", "create"))
+      throw new Error("Unauthorized");
+
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
     const role = formData.get("role") as string;
@@ -67,6 +79,10 @@ export async function addUser(formData: FormData) {
 
 export async function updateUser(formData: FormData) {
   try {
+    const session = await getMyServerSession();
+    if (!hasPermission(session.user, "users", "update"))
+      throw new Error("Unauthorized");
+
     await connectDB();
 
     const userId = formData.get("userId") as string;
@@ -107,7 +123,7 @@ export async function updateUser(formData: FormData) {
       throw new Error("User not found");
     }
 
-    revalidatePath("/admin/users");
+    revalidatePath("/dashboard/users");
     return { success: true, data: JSON.stringify(updatedUser) };
   } catch (error) {
     return { success: false, message: (error as Error).message };
@@ -116,6 +132,10 @@ export async function updateUser(formData: FormData) {
 
 export async function deleteUser(formData: FormData) {
   try {
+    const session = await getMyServerSession();
+    if (!hasPermission(session.user, "users", "delete"))
+      throw new Error("Unauthorized");
+
     await connectDB();
 
     const userId = formData.get("userId") as string;
@@ -130,9 +150,78 @@ export async function deleteUser(formData: FormData) {
       throw new Error("User not found");
     }
 
-    revalidatePath("/admin/users");
+    revalidatePath("/dashboard/users");
     return { success: true, message: "User deleted successfully" };
   } catch (error) {
     return { success: false, message: (error as Error).message };
+  }
+}
+
+export async function updateUserPassword(formData: FormData) {
+  try {
+    const session = await getMyServerSession();
+    if (!session || !session.user) {
+      throw new Error("Unauthorized - No session found");
+    }
+
+    const userId = session.user.id;
+
+    await connectDB();
+    const targetUser = await User.findById(userId).select("role id");
+    if (!targetUser) {
+      throw new Error("Target user not found");
+    }
+
+    if (!(await hasPermission(session.user, "users", "updatePassword"))) {
+      throw new Error("Unauthorized - Insufficient permissions");
+    }
+
+    const currentPassword = formData.get("currentPassword") as string;
+    const newPassword = formData.get("newPassword") as string;
+
+    if (!currentPassword || !newPassword) {
+      throw new Error("Required fields are missing");
+    }
+
+    const existingUser = await User.findById(userId);
+    if (!existingUser) {
+      throw new Error("User not found");
+    }
+
+    const isPasswordValid = await bcrypt.compare(
+      currentPassword,
+      existingUser.password
+    );
+
+    if (!isPasswordValid) {
+      throw new Error("Current password is incorrect");
+    }
+
+    if (newPassword.length < 6) {
+      throw new Error("New password must be at least 6 characters long");
+    }
+
+    const newPasswordHashed = await bcrypt.hash(newPassword, 10);
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { password: newPasswordHashed },
+      { new: true }
+    ).select("-password");
+
+    if (!updatedUser) {
+      throw new Error("Failed to update user");
+    }
+
+    revalidatePath("/dashboard/users");
+    revalidatePath("/settings");
+
+    return { success: true, data: JSON.stringify(updatedUser) };
+  } catch (error) {
+    return {
+      success: false,
+      message:
+        error instanceof Error ? error.message : "An unexpected error occurred",
+    };
   }
 }

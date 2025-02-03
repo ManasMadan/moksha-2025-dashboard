@@ -1,4 +1,4 @@
-import { AuthOptions } from "next-auth";
+import { AuthOptions, getServerSession, Session } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { connectDB } from "@/lib/db";
@@ -44,11 +44,17 @@ export const authOptions: AuthOptions = {
   ],
   callbacks: {
     async jwt({ token, user }) {
-      if (user) token.role = user.role;
+      if (user) {
+        token.role = user.role;
+        token.id = user.id;
+      }
       return token;
     },
     async session({ session, token }) {
-      if (token) session.user.role = token.role;
+      if (token) {
+        session.user.role = token.role;
+        session.user.id = token.id;
+      }
       return session;
     },
   },
@@ -59,4 +65,12 @@ export const authOptions: AuthOptions = {
   pages: {
     signIn: "/",
   },
+};
+
+export const getMyServerSession = async () => {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    throw new Error("Not authenticated");
+  }
+  return session as Session;
 };

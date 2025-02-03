@@ -1,5 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getUsers, updateUser, deleteUser, addUser } from "@/server/user";
+import {
+  getUsers,
+  updateUser,
+  deleteUser,
+  addUser,
+  updateUserPassword,
+} from "@/server/user";
 
 export function useUsers() {
   const queryClient = useQueryClient();
@@ -54,10 +60,24 @@ export function useUsers() {
     },
   });
 
+  const updatePasswordMutation = useMutation({
+    mutationFn: async (userData: FormData) => {
+      const response = await updateUserPassword(userData);
+      if (!response.success) {
+        throw new Error(response.message);
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+    },
+  });
+
   return {
     usersQuery,
     addUserMutation,
     updateUserMutation,
     deleteUserMutation,
+    updatePasswordMutation,
   };
 }
