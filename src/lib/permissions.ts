@@ -1,6 +1,7 @@
+import { User } from "next-auth";
 import { getMyServerSession } from "./auth";
-
-type User = { role: Role; id: string };
+import { IUser } from "@/models/User";
+import { IEvent } from "@/models/Event";
 
 type PermissionCheck<Key extends keyof Permissions> =
   | boolean
@@ -17,13 +18,17 @@ type RolesWithPermissions = {
 
 type Permissions = {
   users: {
-    dataType: User;
+    dataType: IUser;
     action: "view" | "create" | "update" | "list" | "delete" | "updatePassword";
+  };
+  events: {
+    dataType: IEvent;
+    action: "create" | "update" | "list" | "delete";
   };
 };
 
 const ROLES = {
-  SOCIERY: {
+  SOCIETY: {
     users: {
       updatePassword: async (user) => {
         const session = await getMyServerSession();
@@ -33,10 +38,17 @@ const ROLES = {
   },
   EM: {
     users: {
+      create: (user, newUser) => newUser.role === "SOCIETY",
       updatePassword: async (user) => {
         const session = await getMyServerSession();
         return session.user.id === user.id;
       },
+    },
+    events: {
+      list: true,
+      create: true,
+      update: true,
+      delete: true,
     },
   },
   TECH: {
@@ -47,6 +59,12 @@ const ROLES = {
       update: true,
       delete: true,
       updatePassword: true,
+    },
+    events: {
+      list: true,
+      create: true,
+      update: true,
+      delete: true,
     },
   },
 } as const satisfies RolesWithPermissions;

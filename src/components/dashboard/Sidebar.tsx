@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Settings, PanelLeft, Home, User } from "lucide-react";
+import { Settings, PanelLeft, Home, User, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useSession } from "next-auth/react";
@@ -19,6 +19,12 @@ const SIDEBAR_ITEMS = [
     icon: User,
     href: "/dashboard/users",
     role: ["TECH"],
+  },
+  {
+    label: "Events",
+    icon: Calendar,
+    href: "/dashboard/events",
+    role: ["TECH", "EM"],
   },
   {
     label: "Settings",

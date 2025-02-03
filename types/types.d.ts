@@ -1,1 +1,1 @@
-type Role = "SOCIERY" | "EM" | "TECH";
+type Role = "SOCIETY" | "EM" | "TECH";

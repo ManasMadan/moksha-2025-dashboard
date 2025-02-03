@@ -67,6 +67,7 @@ type UserModalProps = {
   initialData: any;
   isLoading: boolean;
   error: Error | null;
+  allowedRoles?: string[];
 };
 
 export function UserModal({
@@ -76,6 +77,7 @@ export function UserModal({
   initialData,
   isLoading,
   error,
+  allowedRoles = [...USER_ROLES],
 }: UserModalProps) {
   const form = useForm({
     resolver: zodResolver(userSchema),
@@ -175,11 +177,14 @@ export function UserModal({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {USER_ROLES.map((role) => (
-                        <SelectItem key={role} value={role}>
-                          {role}
-                        </SelectItem>
-                      ))}
+                      {USER_ROLES.map(
+                        (role) =>
+                          allowedRoles.includes(role) && (
+                            <SelectItem key={role} value={role}>
+                              {role}
+                            </SelectItem>
+                          )
+                      )}
                     </SelectContent>
                   </Select>
                   <FormMessage />

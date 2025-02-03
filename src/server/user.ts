@@ -225,3 +225,26 @@ export async function updateUserPassword(formData: FormData) {
     };
   }
 }
+
+export async function searchUsers(query: string, role: Role | undefined) {
+  try {
+    const session = await getMyServerSession();
+    if (!hasPermission(session.user, "users", "list"))
+      throw new Error("Unauthorized");
+
+    await connectDB();
+
+    const searchConditions: any = {
+      email: { $regex: query, $options: "i" },
+    };
+
+    if (role) {
+      searchConditions.role = role;
+    }
+
+    const users = await User.find(searchConditions).select("-password");
+    return { success: true, data: JSON.stringify(users) };
+  } catch (error) {
+    return { success: false, message: (error as Error).message };
+  }
+}
