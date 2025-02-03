@@ -20,7 +20,6 @@ import { useUsers } from "@/hooks/useUsers";
 
 interface User {
   _id: string;
-  username: string;
   email: string;
   role: string;
 }
@@ -30,21 +29,19 @@ export default function UsersPage() {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [deleteUserData, setDeleteUserData] = useState<User | null>(null);
 
-  const { 
+  const {
     usersQuery: { data: usersData, isLoading, isError, error },
     addUserMutation,
     updateUserMutation,
-    deleteUserMutation
+    deleteUserMutation,
   } = useUsers();
 
   const handleAddUser = (newUserData: {
-    username: string;
     email: string;
     role: string;
     password?: string;
   }) => {
     const formData = new FormData();
-    formData.append("username", newUserData.username);
     formData.append("email", newUserData.email);
     formData.append("role", newUserData.role);
     if (newUserData.password) {
@@ -55,19 +52,17 @@ export default function UsersPage() {
       onSuccess: () => {
         setIsAddModalOpen(false);
         toast.success("User added successfully");
-      }
+      },
     });
   };
- 
+
   const handleEditUser = (updatedUserData: {
-    username: string;
     email: string;
     role: string;
     password?: string;
   }) => {
     const formData = new FormData();
     formData.append("userId", editingUser?._id || "");
-    formData.append("username", updatedUserData.username);
     formData.append("email", updatedUserData.email);
     formData.append("role", updatedUserData.role);
     if (updatedUserData.password) {
@@ -78,7 +73,7 @@ export default function UsersPage() {
       onSuccess: () => {
         setEditingUser(null);
         toast.success("User updated successfully");
-      }
+      },
     });
   };
 
@@ -92,7 +87,7 @@ export default function UsersPage() {
       onSuccess: () => {
         setDeleteUserData(null);
         toast.success("User deleted successfully");
-      }
+      },
     });
   };
 
@@ -134,7 +129,6 @@ export default function UsersPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Username</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Role</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -143,7 +137,6 @@ export default function UsersPage() {
           <TableBody>
             {usersData?.map((user: User) => (
               <TableRow key={user._id}>
-                <TableCell>{user.username}</TableCell>
                 <TableCell>{user.email}</TableCell>
                 <TableCell className="font-semibold">{user.role}</TableCell>
                 <TableCell className="text-right space-x-2">
@@ -189,8 +182,8 @@ export default function UsersPage() {
       <DeleteConfirmModal
         isOpen={!!deleteUserData}
         onClose={() => setDeleteUserData(null)}
+        email={deleteUserData?.email || ""}
         onConfirm={handleDeleteUser}
-        userName={deleteUserData?.username}
         isLoading={deleteUserMutation.isPending}
         error={deleteUserMutation.error as Error | null}
       />

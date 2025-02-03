@@ -13,23 +13,23 @@ export const authOptions: AuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
+        if (!credentials || !credentials?.email || !credentials?.password) {
           throw new Error("Invalid credentials");
         }
 
         await connectDB();
-        
+
         const user = await User.findOne({ email: credentials.email });
-        
+
         if (!user) {
           throw new Error("User not found");
         }
-        
+
         const isPasswordValid = await bcrypt.compare(
           credentials.password,
           user.password
         );
-        
+
         if (!isPasswordValid) {
           throw new Error("Invalid password");
         }
@@ -37,7 +37,6 @@ export const authOptions: AuthOptions = {
         return {
           id: user._id.toString(),
           email: user.email,
-          username: user.username,
           role: user.role,
         };
       },
@@ -45,17 +44,11 @@ export const authOptions: AuthOptions = {
   ],
   callbacks: {
     async jwt({ token, user }) {
-      if (user) {
-        token.role = user.role;
-        token.username = user.username;
-      }
+      if (user) token.role = user.role;
       return token;
     },
     async session({ session, token }) {
-      if (token) {
-        session.user.role = token.role;
-        session.user.username = token.username;
-      }
+      if (token) session.user.role = token.role;
       return session;
     },
   },

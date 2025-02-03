@@ -30,11 +30,10 @@ import {
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-const USER_ROLES = ["ADMIN", "SME", "QC", "REVIEWER"] as const;
+const USER_ROLES = ["SOCIETY", "EM", "TECH"] as const;
 
 const userSchema = z
   .object({
-    username: z.string().min(2, "Name must be at least 2 characters"),
     email: z.string().email("Invalid email address"),
     password: z
       .union([
@@ -46,7 +45,11 @@ const userSchema = z
   })
   .refine(
     (data) => {
-      if (data.password && data.password.length > 0 && data.password.length < 6) {
+      if (
+        data.password &&
+        data.password.length > 0 &&
+        data.password.length < 6
+      ) {
         return false;
       }
       return true;
@@ -77,20 +80,18 @@ export function UserModal({
   const form = useForm({
     resolver: zodResolver(userSchema),
     defaultValues: {
-      username: initialData?.username || "",
       email: initialData?.email || "",
       password: "",
-      role: initialData?.role || "SME",
+      role: initialData?.role || "SOCIETY",
     },
   });
 
   useEffect(() => {
     if (isOpen) {
       form.reset({
-        username: initialData?.username || "",
         email: initialData?.email || "",
         password: "",
-        role: initialData?.role || "SME",
+        role: initialData?.role || "SOCIETY",
       });
     }
   }, [isOpen, initialData, form]);
@@ -106,7 +107,9 @@ export function UserModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{initialData ? "Edit User" : "Add New User"}</DialogTitle>
+          <DialogTitle>
+            {initialData ? "Edit User" : "Add New User"}
+          </DialogTitle>
         </DialogHeader>
 
         {error && (
@@ -116,21 +119,10 @@ export function UserModal({
         )}
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="username"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter full name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
+          <form
+            onSubmit={form.handleSubmit(handleSubmit)}
+            className="space-y-4"
+          >
             <FormField
               control={form.control}
               name="email"
@@ -138,7 +130,11 @@ export function UserModal({
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="Enter email address" {...field} />
+                    <Input
+                      type="email"
+                      placeholder="Enter email address"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -152,7 +148,11 @@ export function UserModal({
                 <FormItem>
                   <FormLabel>Password</FormLabel>
                   <FormControl>
-                    <Input type="password" placeholder="Enter password" {...field} />
+                    <Input
+                      type="password"
+                      placeholder="Enter password"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -165,7 +165,10 @@ export function UserModal({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Role</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select role" />
@@ -185,7 +188,12 @@ export function UserModal({
             />
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                disabled={isLoading}
+              >
                 Cancel
               </Button>
               <Button type="submit" disabled={isLoading}>

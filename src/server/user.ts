@@ -1,23 +1,12 @@
 "use server";
 
-import { authOptions } from "@/lib/auth";
-import { ROLES } from "@/lib/constants";
 import { connectDB } from "@/lib/db";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
-import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
-
-async function checkAdminAuthorization() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.role || session.user.role !== ROLES.ADMIN) {
-    throw new Error("Unauthorized: Admin access required");
-  }
-}
 
 export async function getUsers() {
   try {
-    await checkAdminAuthorization();
     await connectDB();
 
     const users = await User.find({}).select("-password");
@@ -29,7 +18,6 @@ export async function getUsers() {
 
 export async function getUser(userId: string) {
   try {
-    await checkAdminAuthorization();
     await connectDB();
 
     const user = await User.findById(userId).select("-password");
@@ -45,21 +33,18 @@ export async function getUser(userId: string) {
 
 export async function addUser(formData: FormData) {
   try {
-    await checkAdminAuthorization();
-
-    const username = formData.get("username") as string;
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
     const role = formData.get("role") as string;
 
-    if (!username || !email || !password || !role) {
+    if (!email || !password || !role) {
       throw new Error("All fields are required");
     }
 
     await connectDB();
 
     const existingUser = await User.findOne({
-      $or: [{ email }, { username }],
+      email,
     });
 
     if (existingUser) {
@@ -69,13 +54,10 @@ export async function addUser(formData: FormData) {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await User.create({
-      username,
       email,
       password: hashedPassword,
       role,
     });
-
-    console.log(user);
 
     return { success: true, message: "User registered successfully" };
   } catch (error) {
@@ -85,34 +67,30 @@ export async function addUser(formData: FormData) {
 
 export async function updateUser(formData: FormData) {
   try {
-    await checkAdminAuthorization();
     await connectDB();
 
     const userId = formData.get("userId") as string;
-    const username = formData.get("username") as string;
     const email = formData.get("email") as string;
     const role = formData.get("role") as string;
     const newPassword = formData.get("password") as string | null;
 
-    if (!userId || !username || !email || !role) {
+    if (!userId || !email || !role) {
       throw new Error("Required fields are missing");
     }
 
     const existingUser = await User.findOne({
-      $and: [{ _id: { $ne: userId } }, { $or: [{ email }, { username }] }],
+      $and: [{ _id: { $ne: userId } }, { email }],
     });
 
     if (existingUser) {
-      throw new Error("Username or email already exists");
+      throw new Error("Email already exists");
     }
 
     const updateData: {
-      username: string;
       email: string;
       role: string;
       password?: string;
     } = {
-      username,
       email,
       role,
     };
@@ -138,7 +116,6 @@ export async function updateUser(formData: FormData) {
 
 export async function deleteUser(formData: FormData) {
   try {
-    await checkAdminAuthorization();
     await connectDB();
 
     const userId = formData.get("userId") as string;

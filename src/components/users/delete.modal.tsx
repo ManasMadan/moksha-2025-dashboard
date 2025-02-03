@@ -1,23 +1,29 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 type DeleteConfirmModalProps = {
-  isOpen: boolean
-  onClose: () => void
-  onConfirm: () => void
-  userName: string | undefined
-  isLoading: boolean
-  error: Error | null
-}
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  email: string;
+  isLoading: boolean;
+  error: Error | null;
+};
 
-export function DeleteConfirmModal({ 
-  isOpen, 
-  onClose, 
-  onConfirm, 
-  userName,
+export function DeleteConfirmModal({
+  isOpen,
+  onClose,
+  onConfirm,
+  email,
   isLoading,
-  error
+  error,
 }: DeleteConfirmModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -32,15 +38,17 @@ export function DeleteConfirmModal({
           </Alert>
         )}
 
-        <p>Are you sure you want to delete user <strong>{userName}</strong>?</p>
-        
+        <p>
+          Are you sure you want to delete user <strong>{email}</strong>?
+        </p>
+
         <DialogFooter>
           <Button type="button" onClick={onClose} disabled={isLoading}>
             Cancel
           </Button>
-          <Button 
-            variant="destructive" 
-            onClick={onConfirm} 
+          <Button
+            variant="destructive"
+            onClick={onConfirm}
             disabled={isLoading}
           >
             {isLoading ? "Deleting..." : "Delete"}
@@ -48,5 +56,5 @@ export function DeleteConfirmModal({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

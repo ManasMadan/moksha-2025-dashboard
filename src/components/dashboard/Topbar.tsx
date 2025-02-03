@@ -30,14 +30,14 @@ export function Topbar() {
         <DropdownMenuTrigger>
           <Avatar>
             <AvatarFallback>
-              {session?.user?.username?.charAt(0).toUpperCase() || "J"}
+              {session?.user?.email?.charAt(0).toUpperCase() || "N"}
             </AvatarFallback>
           </Avatar>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
           <DropdownMenuItem>
             <div>
-              <h1>{session?.user?.username}</h1>
+              <h1>{session?.user?.email}</h1>
               <p className="text-xs font-semibold">{session?.user?.role}</p>
             </div>
           </DropdownMenuItem>
