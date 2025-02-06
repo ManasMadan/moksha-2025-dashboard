@@ -67,7 +67,11 @@ export function UserCombobox({
   return (
     <>
       {allowCreate && (
-        <Button className="ml-4" onClick={() => setIsCreateModalOpen(true)}>
+        <Button
+          type="button"
+          className="ml-4"
+          onClick={() => setIsCreateModalOpen(true)}
+        >
           Create User
         </Button>
       )}
