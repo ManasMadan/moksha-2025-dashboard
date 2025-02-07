@@ -67,7 +67,7 @@ type UserModalProps = {
   initialData: any;
   isLoading: boolean;
   error: Error | null;
-  allowedRoles?: string[];
+  allowedRoles?: Role[];
 };
 
 export function UserModal({

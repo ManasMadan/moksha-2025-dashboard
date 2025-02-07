@@ -28,6 +28,7 @@ interface UserComboboxProps {
   role?: string;
   allowCreate?: boolean;
   defaultValue: IUser | null;
+  allowedRoles?: Role[];
 }
 
 export function UserCombobox({
@@ -35,6 +36,7 @@ export function UserCombobox({
   role,
   allowCreate = false,
   defaultValue,
+  allowedRoles,
 }: UserComboboxProps) {
   const [open, setOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<IUser | null>(defaultValue);
@@ -129,6 +131,7 @@ export function UserCombobox({
           initialData={null}
           isLoading={false}
           error={null}
+          allowedRoles={allowedRoles}
         />
       )}
     </>

@@ -18,7 +18,7 @@ export function useUserSearch() {
   }, [query]);
 
   const userSearchQuery = useQuery({
-    queryKey: ["userSearch", debouncedQuery, role],
+    queryKey: ["users", debouncedQuery, role],
     queryFn: async () => {
       if (debouncedQuery.length < 2) return [];
 

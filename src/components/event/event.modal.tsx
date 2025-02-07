@@ -149,6 +149,7 @@ export function EventModal({
                 <FormItem>
                   <FormLabel>Event Owner</FormLabel>
                   <UserCombobox
+                    allowedRoles={["SOCIETY"]}
                     allowCreate={true}
                     onUserSelect={(user: IUser) => {
                       form.setValue("owner", user._id);
