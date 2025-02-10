@@ -17,6 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { useUsers } from "@/hooks/useUsers";
+import { useSession } from "next-auth/react";
 
 interface User {
   _id: string;
@@ -28,6 +29,7 @@ export default function UsersPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [deleteUserData, setDeleteUserData] = useState<User | null>(null);
+  const session = useSession();
 
   const {
     usersQuery: { data: usersData, isLoading, isError, error },
@@ -168,6 +170,9 @@ export default function UsersPage() {
         initialData={null}
         isLoading={addUserMutation.isPending}
         error={addUserMutation.error as Error | null}
+        allowedRoles={
+          session.data?.user.role === "TECH" ? undefined : ["SOCIETY"]
+        }
       />
 
       <UserModal
@@ -177,6 +182,9 @@ export default function UsersPage() {
         initialData={editingUser}
         isLoading={updateUserMutation.isPending}
         error={updateUserMutation.error as Error | null}
+        allowedRoles={
+          session.data?.user.role === "TECH" ? undefined : ["SOCIETY"]
+        }
       />
 
       <DeleteConfirmModal

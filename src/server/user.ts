@@ -24,14 +24,14 @@ export async function getUsers() {
 export async function getUser(userId: string) {
   try {
     const session = await getMyServerSession();
-    if (!hasPermission(session.user, "users", "view"))
-      throw new Error("Unauthorized");
     await connectDB();
 
     const user = await User.findById(userId).select("-password");
     if (!user) {
       throw new Error("User not found");
     }
+    if (!hasPermission(session.user, "users", "view", user))
+      throw new Error("Unauthorized");
 
     return { success: true, data: user };
   } catch (error) {
@@ -42,16 +42,16 @@ export async function getUser(userId: string) {
 export async function addUser(formData: FormData) {
   try {
     const session = await getMyServerSession();
-    if (!hasPermission(session.user, "users", "create"))
-      throw new Error("Unauthorized");
 
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
-    const role = formData.get("role") as string;
+    const role = formData.get("role") as Role;
 
     if (!email || !password || !role) {
       throw new Error("All fields are required");
     }
+    if (!hasPermission(session.user, "users", "create", { email, role }))
+      throw new Error("Unauthorized");
 
     await connectDB();
 
@@ -80,8 +80,6 @@ export async function addUser(formData: FormData) {
 export async function updateUser(formData: FormData) {
   try {
     const session = await getMyServerSession();
-    if (!hasPermission(session.user, "users", "update"))
-      throw new Error("Unauthorized");
 
     await connectDB();
 
@@ -94,13 +92,9 @@ export async function updateUser(formData: FormData) {
       throw new Error("Required fields are missing");
     }
 
-    const existingUser = await User.findOne({
-      $and: [{ _id: { $ne: userId } }, { email }],
-    });
-
-    if (existingUser) {
-      throw new Error("Email already exists");
-    }
+    const existingUser = await User.findById(userId).select("-password");
+    if (!hasPermission(session.user, "users", "update", existingUser))
+      throw new Error("Unauthorized");
 
     const updateData: {
       email: string;
@@ -133,21 +127,23 @@ export async function updateUser(formData: FormData) {
 export async function deleteUser(formData: FormData) {
   try {
     const session = await getMyServerSession();
-    if (!hasPermission(session.user, "users", "delete"))
-      throw new Error("Unauthorized");
-
     await connectDB();
 
     const userId = formData.get("userId") as string;
-
     if (!userId) {
       throw new Error("User ID is required");
     }
 
-    const deletedUser = await User.findByIdAndDelete(userId);
-
+    const deletedUser = await User.findByIdAndDelete(userId).select(
+      "-password"
+    );
     if (!deletedUser) {
       throw new Error("User not found");
+    }
+
+    if (!hasPermission(session.user, "users", "delete", deletedUser)) {
+      await User.create(deletedUser);
+      throw new Error("Unauthorized");
     }
 
     revalidatePath("/dashboard/users");
@@ -160,22 +156,11 @@ export async function deleteUser(formData: FormData) {
 export async function updateUserPassword(formData: FormData) {
   try {
     const session = await getMyServerSession();
-    if (!session || !session.user) {
+    if (!session?.user) {
       throw new Error("Unauthorized - No session found");
     }
 
     const userId = session.user.id;
-
-    await connectDB();
-    const targetUser = await User.findById(userId).select("role id");
-    if (!targetUser) {
-      throw new Error("Target user not found");
-    }
-
-    if (!(await hasPermission(session.user, "users", "updatePassword"))) {
-      throw new Error("Unauthorized - Insufficient permissions");
-    }
-
     const currentPassword = formData.get("currentPassword") as string;
     const newPassword = formData.get("newPassword") as string;
 
@@ -183,9 +168,26 @@ export async function updateUserPassword(formData: FormData) {
       throw new Error("Required fields are missing");
     }
 
-    const existingUser = await User.findById(userId);
+    if (newPassword.length < 6) {
+      throw new Error("New password must be at least 6 characters long");
+    }
+
+    await connectDB();
+
+    const existingUser = await User.findById(userId).select("password role");
     if (!existingUser) {
       throw new Error("User not found");
+    }
+
+    if (
+      !(await hasPermission(
+        session.user,
+        "users",
+        "updatePassword",
+        existingUser
+      ))
+    ) {
+      throw new Error("Unauthorized - Insufficient permissions");
     }
 
     const isPasswordValid = await bcrypt.compare(
@@ -195,10 +197,6 @@ export async function updateUserPassword(formData: FormData) {
 
     if (!isPasswordValid) {
       throw new Error("Current password is incorrect");
-    }
-
-    if (newPassword.length < 6) {
-      throw new Error("New password must be at least 6 characters long");
     }
 
     const newPasswordHashed = await bcrypt.hash(newPassword, 10);

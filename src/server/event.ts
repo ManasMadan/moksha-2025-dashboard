@@ -13,7 +13,26 @@ export async function getEvents() {
       throw new Error("Unauthorized");
 
     await connectDB();
-    const events = await Event.find({}).populate("owner");
+    const events = await Event.find({}).populate({
+      path: "owner",
+      select: "-password",
+    });
+    return { success: true, data: JSON.stringify(events) };
+  } catch (error) {
+    return { success: false, message: (error as Error).message };
+  }
+}
+
+export async function getMyEvents() {
+  try {
+    const session = await getMyServerSession();
+    if (!hasPermission(session.user, "events", "list"))
+      throw new Error("Unauthorized");
+
+    await connectDB();
+    const events = await Event.find({ owner: session.user.id }).select(
+      "-owner"
+    );
     return { success: true, data: JSON.stringify(events) };
   } catch (error) {
     return { success: false, message: (error as Error).message };

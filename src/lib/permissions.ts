@@ -3,6 +3,14 @@ import { getMyServerSession } from "./auth";
 import { IUser } from "@/models/User";
 import { IEvent } from "@/models/Event";
 
+type BaseUser = Partial<Pick<IUser, "_id">> &
+  Pick<IUser, "email" | "role"> & {
+    password?: string;
+  };
+
+type BaseEvent = Partial<Pick<IEvent, "_id">> &
+  Pick<IEvent, "name" | "owner" | "day" | "startTime" | "endTime">;
+
 type PermissionCheck<Key extends keyof Permissions> =
   | boolean
   | ((user: User, data: Permissions[Key]["dataType"]) => boolean)
@@ -18,11 +26,11 @@ type RolesWithPermissions = {
 
 type Permissions = {
   users: {
-    dataType: IUser;
+    dataType: BaseUser;
     action: "view" | "create" | "update" | "list" | "delete" | "updatePassword";
   };
   events: {
-    dataType: IEvent;
+    dataType: BaseEvent;
     action: "create" | "update" | "list" | "delete";
   };
 };
@@ -35,14 +43,22 @@ const ROLES = {
         return session.user.id === user.id;
       },
     },
+    events: {
+      list: true,
+      update: true,
+    },
   },
   EM: {
     users: {
+      list: true,
+      view: (user, newUser) => newUser.role === "SOCIETY",
       create: (user, newUser) => newUser.role === "SOCIETY",
-      updatePassword: async (user) => {
+      updatePassword: async (user, newUser) => {
         const session = await getMyServerSession();
-        return session.user.id === user.id;
+        return session.user.id === user.id || newUser.role === "SOCIETY";
       },
+      delete: (user, newUser) => newUser.role === "SOCIETY",
+      update: (user, newUser) => newUser.role === "SOCIETY",
     },
     events: {
       list: true,

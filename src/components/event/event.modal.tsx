@@ -83,7 +83,7 @@ export function EventModal({
     resolver: zodResolver(eventSchema),
     defaultValues: {
       name: initialData?.name || "",
-      owner: initialData?.owner._id || "",
+      owner: initialData?.owner?._id || "",
       day: initialData?.day || 1,
       startTime: initialData?.startTime || "00:00",
       endTime: initialData?.endTime || "01:00",
@@ -94,7 +94,7 @@ export function EventModal({
     if (isOpen) {
       form.reset({
         name: initialData?.name || "",
-        owner: initialData?.owner._id || "",
+        owner: initialData?.owner?._id || "",
         day: initialData?.day || 1,
         startTime: initialData?.startTime || "00:00",
         endTime: initialData?.endTime || "01:00",

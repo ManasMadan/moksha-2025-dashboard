@@ -18,13 +18,19 @@ const SIDEBAR_ITEMS = [
     label: "Users",
     icon: User,
     href: "/dashboard/users",
-    role: ["TECH"],
+    role: ["TECH", "EM"],
   },
   {
     label: "Events",
     icon: Calendar,
     href: "/dashboard/events",
     role: ["TECH", "EM"],
+  },
+  {
+    label: "My Events",
+    icon: Calendar,
+    href: "/dashboard/my-events",
+    role: ["SOCIETY"],
   },
   {
     label: "Settings",

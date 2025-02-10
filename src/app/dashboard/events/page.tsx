@@ -148,7 +148,11 @@ export default function EventsPage() {
             {eventsData?.map((event: IEvent) => (
               <TableRow key={event._id}>
                 <TableCell>{event.name}</TableCell>
-                <TableCell>{event.owner.email}</TableCell>
+                <TableCell>
+                  {event.owner
+                    ? event.owner.email
+                    : "The Owner was deleted, assign a new owner"}
+                </TableCell>
                 <TableCell>{event.day}</TableCell>
                 <TableCell>{event.startTime}</TableCell>
                 <TableCell>{event.endTime}</TableCell>
