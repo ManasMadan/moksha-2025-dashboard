@@ -50,6 +50,7 @@ export async function addEvent(formData: FormData) {
     const day = Number(formData.get("day"));
     const startTime = formData.get("startTime") as string;
     const endTime = formData.get("endTime") as string;
+    const venue = formData.get("venue") as string;
 
     if (!name || !owner || !day || !startTime || !endTime) {
       throw new Error("All fields are required");
@@ -62,6 +63,7 @@ export async function addEvent(formData: FormData) {
       day,
       startTime,
       endTime,
+      venue,
     });
 
     if (existingEvent) {
@@ -74,6 +76,7 @@ export async function addEvent(formData: FormData) {
       day,
       startTime,
       endTime,
+      venue,
     });
 
     revalidatePath("/dashboard/events");
