@@ -1,5 +1,25 @@
 import mongoose, { Document } from "mongoose";
 
+export interface ICustomInput {
+  type:
+    | "shortText"
+    | "select"
+    | "number"
+    | "email"
+    | "phone"
+    | "longText"
+    | "file"
+    | "date"
+    | "link"
+    | "time";
+  label: string;
+  placeholder?: string;
+  required: boolean;
+  options?: string[]; // for select type
+  fileType?: "pdf" | "image" | "video"; // for file type
+  maxSize?: number; // for file type
+}
+
 export interface IEvent extends Document {
   _id: string;
   name: string;
@@ -16,6 +36,7 @@ export interface IEvent extends Document {
   maxNumberOfTeamMembers: number;
   createdAt: Date;
   updatedAt: Date;
+  customInputs: ICustomInput[];
 }
 
 const EventSchema = new mongoose.Schema<IEvent>(
@@ -78,6 +99,38 @@ const EventSchema = new mongoose.Schema<IEvent>(
       type: Number,
       default: 1,
       min: 1,
+    },
+    customInputs: {
+      type: [
+        {
+          type: {
+            type: String,
+            enum: [
+              "shortText",
+              "select",
+              "number",
+              "email",
+              "phone",
+              "longText",
+              "file",
+              "date",
+              "link",
+              "time",
+            ],
+            required: true,
+          },
+          label: { type: String, required: true },
+          placeholder: { type: String },
+          required: { type: Boolean, default: false },
+          options: { type: [String] }, // for select type
+          fileType: {
+            type: String,
+            enum: ["pdf", "image", "video"],
+          }, // for file type
+          maxSize: { type: Number }, // for file type
+        },
+      ],
+      default: [],
     },
   },
   { timestamps: true }

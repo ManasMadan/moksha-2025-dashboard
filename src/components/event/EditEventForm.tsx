@@ -21,6 +21,28 @@ import { toast } from "sonner";
 import { updateEventSociety } from "@/server/event";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
+const customInputSchema = z.object({
+  type: z.enum([
+    "shortText",
+    "select",
+    "number",
+    "email",
+    "phone",
+    "longText",
+    "file",
+    "date",
+    "link",
+    "time",
+  ]),
+  label: z.string().min(1, "Label is required"),
+  placeholder: z.string().optional(),
+  required: z.boolean(),
+  options: z.array(z.string()).optional(), // for select type
+  fileType: z.enum(["pdf", "image", "video"]).optional(), // for file type
+  maxSize: z.number().optional(), // for file type
+});
+
 const eventSchema = z
   .object({
     acceptingRegistrations: z.boolean(),
@@ -35,6 +57,7 @@ const eventSchema = z
       .number()
       .min(1, "Maximum number of team members must be at least 1")
       .optional(),
+    customInputs: z.array(customInputSchema).optional(),
   })
   .refine(
     (data) => {
@@ -82,6 +105,7 @@ export default function EditEventForm({ event }: Props) {
       isTeamEvent: event.isTeamEvent,
       minNumberOfTeamMembers: Number(event.minNumberOfTeamMembers) || undefined,
       maxNumberOfTeamMembers: Number(event.maxNumberOfTeamMembers) || undefined,
+      customInputs: event.customInputs || [],
     },
   });
 
@@ -103,6 +127,54 @@ export default function EditEventForm({ event }: Props) {
       form.setValue("imageData", base64String);
     };
     reader.readAsDataURL(file);
+  };
+
+  const addCustomInput = () => {
+    form.setValue("customInputs", [
+      ...form.getValues("customInputs"),
+      { type: "shortText", label: "", required: false },
+    ]);
+  };
+
+  const removeCustomInput = (index: number) => {
+    const customInputs = form.getValues("customInputs");
+    customInputs.splice(index, 1);
+    form.setValue("customInputs", customInputs);
+  };
+
+  const handleCustomInputChange = (
+    index: number,
+    field: string,
+    value: any
+  ) => {
+    const customInputs = form.getValues("customInputs");
+    customInputs[index] = { ...customInputs[index], [field]: value };
+    form.setValue("customInputs", customInputs);
+  };
+
+  const addOption = (index: number) => {
+    const customInputs = form.getValues("customInputs");
+    customInputs[index].options = customInputs[index].options || [];
+    customInputs[index].options.push("");
+    form.setValue("customInputs", customInputs);
+  };
+
+  const removeOption = (index: number, optionIndex: number) => {
+    const customInputs = form.getValues("customInputs");
+    customInputs[index].options?.splice(optionIndex, 1);
+    form.setValue("customInputs", customInputs);
+  };
+
+  const handleOptionChange = (
+    index: number,
+    optionIndex: number,
+    value: string
+  ) => {
+    const customInputs = form.getValues("customInputs");
+    if (customInputs[index].options) {
+      customInputs[index].options[optionIndex] = value;
+    }
+    form.setValue("customInputs", customInputs);
   };
 
   const handleSubmit = async (data: any) => {
@@ -131,6 +203,8 @@ export default function EditEventForm({ event }: Props) {
           data.maxNumberOfTeamMembers.toString()
         );
       }
+
+      formData.append("customInputs", JSON.stringify(data.customInputs));
 
       const response = await updateEventSociety(formData);
       if (!response.success) {
@@ -278,6 +352,191 @@ export default function EditEventForm({ event }: Props) {
               />
             </>
           )}
+          <Button type="button" onClick={addCustomInput}>
+            Add Custom Input
+          </Button>
+          {form.watch("customInputs").map((input: any, index: number) => (
+            <div key={index} className="space-y-4">
+              <FormField
+                control={form.control}
+                name={`customInputs.${index}.type`}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Type</FormLabel>
+                    <FormControl>
+                      <select
+                        value={field.value}
+                        onChange={(e) =>
+                          handleCustomInputChange(index, "type", e.target.value)
+                        }
+                      >
+                        <option value="shortText">Short Text</option>
+                        <option value="select">Select</option>
+                        <option value="number">Number</option>
+                        <option value="email">Email</option>
+                        <option value="phone">Phone</option>
+                        <option value="longText">Long Text</option>
+                        <option value="file">File</option>
+                        <option value="date">Date</option>
+                        <option value="link">Link</option>
+                        <option value="time">Time</option>
+                      </select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name={`customInputs.${index}.label`}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Label</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Enter label"
+                        value={field.value || ""}
+                        onChange={(e) =>
+                          handleCustomInputChange(
+                            index,
+                            "label",
+                            e.target.value
+                          )
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name={`customInputs.${index}.placeholder`}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Placeholder</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Enter placeholder"
+                        value={field.value || ""}
+                        onChange={(e) =>
+                          handleCustomInputChange(
+                            index,
+                            "placeholder",
+                            e.target.value
+                          )
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name={`customInputs.${index}.required`}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Required</FormLabel>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={(value) =>
+                          handleCustomInputChange(index, "required", value)
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              {input.type === "select" && (
+                <FormItem>
+                  <FormLabel>Options</FormLabel>
+                  {input.options?.map((option: string, optionIndex: number) => (
+                    <div
+                      key={optionIndex}
+                      className="flex items-center space-x-2"
+                    >
+                      <Input
+                        placeholder="Enter option"
+                        value={option}
+                        onChange={(e) =>
+                          handleOptionChange(index, optionIndex, e.target.value)
+                        }
+                      />
+                      <Button
+                        type="button"
+                        onClick={() => removeOption(index, optionIndex)}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  ))}
+                  <Button type="button" onClick={() => addOption(index)}>
+                    Add Option
+                  </Button>
+                </FormItem>
+              )}
+              {input.type === "file" && (
+                <>
+                  <FormField
+                    control={form.control}
+                    name={`customInputs.${index}.fileType`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>File Type</FormLabel>
+                        <FormControl>
+                          <select
+                            value={field.value || ""}
+                            onChange={(e) =>
+                              handleCustomInputChange(
+                                index,
+                                "fileType",
+                                e.target.value
+                              )
+                            }
+                          >
+                            <option value="pdf">PDF</option>
+                            <option value="image">Image</option>
+                            <option value="video">Video</option>
+                          </select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name={`customInputs.${index}.maxSize`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Max Size (in bytes)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="Enter max file size"
+                            value={field.value || ""}
+                            onChange={(e) =>
+                              handleCustomInputChange(
+                                index,
+                                "maxSize",
+                                Number(e.target.value)
+                              )
+                            }
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </>
+              )}
+              <Button type="button" onClick={() => removeCustomInput(index)}>
+                Remove
+              </Button>
+            </div>
+          ))}
           <Button type="submit" disabled={isLoading}>
             {isLoading ? "Loading..." : "Update Event"}
           </Button>

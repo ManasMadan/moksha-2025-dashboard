@@ -154,6 +154,7 @@ export async function updateEventSociety(formData: FormData) {
     const maxNumberOfTeamMembers = Number(
       formData.get("maxNumberOfTeamMembers")
     );
+    const customInputs = JSON.parse(formData.get("customInputs") as string);
 
     if (
       !eventId ||
@@ -173,6 +174,7 @@ export async function updateEventSociety(formData: FormData) {
         isTeamEvent,
         minNumberOfTeamMembers,
         maxNumberOfTeamMembers,
+        customInputs,
       },
       { new: true }
     );
