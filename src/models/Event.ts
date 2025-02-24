@@ -9,7 +9,7 @@ export interface IEvent extends Document {
   endTime: string;
   venue: string;
   acceptingRegistrations: boolean;
-  imageData: string;
+  imageData?: string;
   description: string;
   isTeamEvent: boolean;
   minNumberOfTeamMembers: number;
@@ -58,6 +58,7 @@ const EventSchema = new mongoose.Schema<IEvent>(
     imageData: {
       type: String,
       default: "",
+      required: false,
     },
     description: {
       type: String,

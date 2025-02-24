@@ -8,6 +8,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { IEvent } from "@/models/Event";
+import Link from "next/link";
 
 export default async function Page() {
   const myEvents = await getMyEvents();
@@ -17,23 +19,37 @@ export default async function Page() {
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {myEvents.data.map((event) => (
-        <Card key={event._id} className="overflow-hidden">
-          <CardHeader>
-            <CardTitle>{event.name}</CardTitle>
-            <CardDescription>Day {event.day}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              {event.startTime} - {event.endTime}
-            </p>
-          </CardContent>
-          <CardFooter className="border-t p-4 flex justify-between">
-            <p className="text-xs text-muted-foreground">
-              Created: {new Date(event.createdAt).toLocaleDateString()}
-            </p>
-          </CardFooter>
-        </Card>
+      {myEvents.data.map((event: IEvent) => (
+        <Link key={event._id} href={`/dashboard/my-events/${event._id}`}>
+          <Card className="overflow-hidden">
+            {event.imageData && (
+              <div className="relative w-full" style={{ aspectRatio: "2/1" }}>
+                <img
+                  src={event.imageData}
+                  alt={event.name}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
+            <CardHeader>
+              <CardTitle>{event.name}</CardTitle>
+              <CardDescription>Day {event.day}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                {event.startTime} - {event.endTime}
+              </p>
+            </CardContent>
+            <CardFooter className="border-t p-4 flex justify-between">
+              <p className="text-xs text-muted-foreground">
+                Venue: {event.venue}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Created: {new Date(event.createdAt).toLocaleDateString()}
+              </p>
+            </CardFooter>
+          </Card>
+        </Link>
       ))}
     </div>
   );

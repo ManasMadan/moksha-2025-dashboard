@@ -133,6 +133,61 @@ export async function updateEvent(formData: FormData) {
   }
 }
 
+export async function updateEventSociety(formData: FormData) {
+  try {
+    const session = await getMyServerSession();
+    const eventId = formData.get("eventId") as string;
+
+    await connectDB();
+    const event = await Event.findById(eventId);
+    if (!hasPermission(session.user, "events", "update_soc", event))
+      throw new Error("Unauthorized");
+
+    const acceptingRegistrations =
+      formData.get("acceptingRegistrations") === "true";
+    const imageData = formData.get("imageData") as string;
+    const description = formData.get("description") as string;
+    const isTeamEvent = formData.get("isTeamEvent") === "true";
+    const minNumberOfTeamMembers = Number(
+      formData.get("minNumberOfTeamMembers")
+    );
+    const maxNumberOfTeamMembers = Number(
+      formData.get("maxNumberOfTeamMembers")
+    );
+
+    if (
+      !eventId ||
+      !description ||
+      !minNumberOfTeamMembers ||
+      !maxNumberOfTeamMembers
+    ) {
+      throw new Error("Required fields are missing");
+    }
+
+    const updatedEvent = await Event.findByIdAndUpdate(
+      eventId,
+      {
+        acceptingRegistrations,
+        imageData,
+        description,
+        isTeamEvent,
+        minNumberOfTeamMembers,
+        maxNumberOfTeamMembers,
+      },
+      { new: true }
+    );
+
+    if (!updatedEvent) {
+      throw new Error("Event not found");
+    }
+
+    revalidatePath("/dashboard/events");
+    return { success: true, data: JSON.stringify(updatedEvent) };
+  } catch (error) {
+    return { success: false, message: (error as Error).message };
+  }
+}
+
 export async function deleteEvent(formData: FormData) {
   try {
     const session = await getMyServerSession();
@@ -155,6 +210,25 @@ export async function deleteEvent(formData: FormData) {
 
     revalidatePath("/dashboard/events");
     return { success: true, message: "Event deleted successfully" };
+  } catch (error) {
+    return { success: false, message: (error as Error).message };
+  }
+}
+
+export async function getEventById(id: string) {
+  try {
+    const session = await getMyServerSession();
+    if (!hasPermission(session.user, "events", "view"))
+      throw new Error("Unauthorized");
+
+    await connectDB();
+    const event = await Event.findById(id);
+
+    if (!event) {
+      throw new Error("Event not found");
+    }
+
+    return { success: true, data: JSON.stringify(event) };
   } catch (error) {
     return { success: false, message: (error as Error).message };
   }
