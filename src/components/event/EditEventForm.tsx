@@ -511,7 +511,7 @@ export default function EditEventForm({ event }: Props) {
                     name={`customInputs.${index}.maxSize`}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Max Size (in bytes)</FormLabel>
+                        <FormLabel>Max Size (in MB)</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
