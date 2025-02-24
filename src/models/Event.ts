@@ -7,6 +7,13 @@ export interface IEvent extends Document {
   day: number;
   startTime: string;
   endTime: string;
+  venue: string;
+  acceptingRegistrations: boolean;
+  imageData: string;
+  description: string;
+  isTeamEvent: boolean;
+  minNumberOfTeamMembers: number;
+  maxNumberOfTeamMembers: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -37,6 +44,39 @@ const EventSchema = new mongoose.Schema<IEvent>(
       type: String,
       required: true,
       match: /^\d{2}:\d{2}$/,
+    },
+    acceptingRegistrations: {
+      type: Boolean,
+      default: true,
+      required: true,
+    },
+    venue: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    imageData: {
+      type: String,
+      default: "",
+    },
+    description: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    isTeamEvent: {
+      type: Boolean,
+      default: false,
+    },
+    minNumberOfTeamMembers: {
+      type: Number,
+      default: 1,
+      min: 1,
+    },
+    maxNumberOfTeamMembers: {
+      type: Number,
+      default: 1,
+      min: 1,
     },
   },
   { timestamps: true }

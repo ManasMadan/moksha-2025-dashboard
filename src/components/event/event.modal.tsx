@@ -45,6 +45,7 @@ const eventSchema = z
     endTime: z
       .string()
       .regex(/^\d{2}:\d{2}$/, "End time must be in HH:MM format"),
+    venue: z.string().min(1, "Venue is required"),
   })
   .refine(
     (data) => {
@@ -87,6 +88,7 @@ export function EventModal({
       day: initialData?.day || 1,
       startTime: initialData?.startTime || "00:00",
       endTime: initialData?.endTime || "01:00",
+      venue: initialData?.venue || "",
     },
   });
 
@@ -98,6 +100,7 @@ export function EventModal({
         day: initialData?.day || 1,
         startTime: initialData?.startTime || "00:00",
         endTime: initialData?.endTime || "01:00",
+        venue: initialData?.venue || "",
       });
     }
   }, [isOpen, initialData, form]);
@@ -218,6 +221,20 @@ export function EventModal({
                       placeholder="Enter end time"
                       {...field}
                     />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="venue"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Venue</FormLabel>
+                  <FormControl>
+                    <Input type="text" placeholder="Enter venue" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

@@ -17,15 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { useEvents } from "@/hooks/useEvents";
-
-interface IEvent {
-  _id: string;
-  name: string;
-  owner: any;
-  day: number;
-  startTime: string;
-  endTime: string;
-}
+import { IEvent } from "@/models/Event";
 
 export default function EventsPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -141,6 +133,7 @@ export default function EventsPage() {
               <TableHead>Day</TableHead>
               <TableHead>Start Time</TableHead>
               <TableHead>End Time</TableHead>
+              <TableHead>Venue</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -150,12 +143,13 @@ export default function EventsPage() {
                 <TableCell>{event.name}</TableCell>
                 <TableCell>
                   {event.owner
-                    ? event.owner.email
+                    ? (event.owner as any).email
                     : "The Owner was deleted, assign a new owner"}
                 </TableCell>
                 <TableCell>{event.day}</TableCell>
                 <TableCell>{event.startTime}</TableCell>
                 <TableCell>{event.endTime}</TableCell>
+                <TableCell>{event.venue}</TableCell>
                 <TableCell className="text-right space-x-2">
                   <Button
                     variant="outline"

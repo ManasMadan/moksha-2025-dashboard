@@ -33,7 +33,7 @@ export async function getMyEvents() {
     const events = await Event.find({ owner: session.user.id }).select(
       "-owner"
     );
-    return { success: true, data: JSON.stringify(events) };
+    return { success: true, data: events };
   } catch (error) {
     return { success: false, message: (error as Error).message };
   }
