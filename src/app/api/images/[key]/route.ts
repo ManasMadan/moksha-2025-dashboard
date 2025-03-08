@@ -14,10 +14,10 @@ const BUCKET_NAME = process.env.MINIO_BUCKET_NAME || "eventimages";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { key: string } }
+  { params }: { params: Promise<{ key: string }> }
 ) {
   try {
-    const { key } = params;
+    const { key } = await params;
 
     if (!key) {
       return NextResponse.json(
