@@ -22,10 +22,10 @@ export default async function Page() {
       {myEvents.data.map((event: IEvent) => (
         <Link key={event._id} href={`/dashboard/my-events/${event._id}`}>
           <Card className="overflow-hidden">
-            {event.imageData && (
+            {event.imageKey && (
               <div className="relative w-full" style={{ aspectRatio: "2/1" }}>
                 <img
-                  src={event.imageData}
+                  src={`/api/images/${event.imageKey}`}
                   alt={event.name}
                   className="w-full h-full object-cover"
                 />

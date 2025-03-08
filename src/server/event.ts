@@ -5,6 +5,52 @@ import { connectDB } from "@/lib/db";
 import { hasPermission } from "@/lib/permissions";
 import Event from "@/models/Event";
 import { revalidatePath } from "next/cache";
+import { Client } from "minio";
+import { randomUUID } from "crypto";
+
+const minioClient = new Client({
+  endPoint: process.env.MINIO_ENDPOINT || "localhost",
+  port: parseInt(process.env.MINIO_PORT || "443"),
+  useSSL: true,
+  accessKey: process.env.MINIO_ACCESS_KEY || "",
+  secretKey: process.env.MINIO_SECRET_KEY || "",
+  region: process.env.MINIO_REGION || "",
+});
+
+const BUCKET_NAME = process.env.MINIO_BUCKET_NAME || "eventimages";
+
+async function ensureBucketExists() {
+  const exists = await minioClient.bucketExists(BUCKET_NAME);
+  if (!exists) {
+    await minioClient.makeBucket(BUCKET_NAME, process.env.MINIO_REGION || "");
+  }
+}
+
+async function uploadImageToMinio(imageData: string): Promise<string> {
+  try {
+    await ensureBucketExists();
+
+    // Extract base64 data
+    const matches = imageData.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+    if (!matches || matches.length !== 3) {
+      throw new Error("Invalid image data format");
+    }
+
+    const type = matches[1];
+    const buffer = Buffer.from(matches[2], "base64");
+    const extension = type.split("/")[1];
+    const fileName = `${randomUUID()}.${extension}`;
+
+    await minioClient.putObject(BUCKET_NAME, fileName, buffer, buffer.length, {
+      "Content-Type": type,
+    });
+
+    return fileName;
+  } catch (error) {
+    console.error("Error uploading to MinIO:", error);
+    throw new Error("Failed to upload image");
+  }
+}
 
 export async function getEvents() {
   try {
@@ -33,6 +79,7 @@ export async function getMyEvents() {
     const events = await Event.find({ owner: session.user.id }).select(
       "-owner"
     );
+
     return { success: true, data: events };
   } catch (error) {
     return { success: false, message: (error as Error).message };
@@ -168,11 +215,25 @@ export async function updateEventSociety(formData: FormData) {
       throw new Error("Required fields are missing");
     }
 
+    // Handle image upload
+    let imageKey = event?.imageKey; // Maintain existing image if not changed
+
+    if (imageData && imageData !== event?.imageKey) {
+      // If image data is provided and different from existing key
+      if (imageData.startsWith("data:")) {
+        // It's a new image, upload to MinIO
+        imageKey = await uploadImageToMinio(imageData);
+      } else {
+        // It's the existing MinIO key or empty
+        imageKey = imageData;
+      }
+    }
+
     const updatedEvent = await Event.findByIdAndUpdate(
       eventId,
       {
         acceptingRegistrations,
-        imageData,
+        imageKey, // Store MinIO object key instead of base64 data
         description,
         isTeamEvent,
         minNumberOfTeamMembers,
@@ -207,11 +268,25 @@ export async function deleteEvent(formData: FormData) {
       throw new Error("Event ID is required");
     }
 
-    const deletedEvent = await Event.findByIdAndDelete(eventId);
+    // Get the event first to retrieve the image key
+    const event = await Event.findById(eventId);
 
-    if (!deletedEvent) {
+    if (!event) {
       throw new Error("Event not found");
     }
+
+    // Delete the associated image from MinIO if it exists
+    if (event.imageKey) {
+      try {
+        await minioClient.removeObject(BUCKET_NAME, event.imageKey);
+      } catch (error) {
+        console.error("Failed to delete image from MinIO:", error);
+        // Continue with event deletion even if image deletion fails
+      }
+    }
+
+    // Now delete the event from MongoDB
+    await Event.findByIdAndDelete(eventId);
 
     revalidatePath("/dashboard/events");
     return { success: true, message: "Event deleted successfully" };
@@ -231,6 +306,27 @@ export async function getEventById(id: string) {
 
     if (!event) {
       throw new Error("Event not found");
+    }
+
+    // If the event has an image key, generate a presigned URL to access it
+    if (event.imageKey) {
+      try {
+        const presignedUrl = await minioClient.presignedGetObject(
+          BUCKET_NAME,
+          event.imageKey,
+          24 * 60 * 60 // URL valid for 24 hours
+        );
+
+        // Add the URL to the event data
+        const eventObj = event.toObject();
+        eventObj.imageUrl = presignedUrl;
+
+        return { success: true, data: JSON.stringify(eventObj) };
+      } catch (error) {
+        console.error("Failed to generate presigned URL:", error);
+        // Return the event without the image URL if there's an error
+        return { success: true, data: JSON.stringify(event) };
+      }
     }
 
     return { success: true, data: JSON.stringify(event) };

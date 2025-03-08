@@ -91,16 +91,21 @@ export default function EditEventForm({ event }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const [imagePreview, setImagePreview] = useState<string | null>(
-    event.imageData || null
-  );
+
+  // Set image preview from either imageData or imageKey
+  const [imagePreview, setImagePreview] = useState<string | null>(() => {
+    if (event.imageData) return event.imageData;
+    if (event.imageKey) return `/api/images/${event.imageKey}`;
+    return null;
+  });
+
   const [imageError, setImageError] = useState<string | null>(null);
 
   const form = useForm({
     resolver: zodResolver(eventSchema),
     defaultValues: {
       acceptingRegistrations: event.acceptingRegistrations,
-      imageData: event.imageData || "",
+      imageData: event.imageData || event.imageKey || "",
       description: event.description || "",
       isTeamEvent: event.isTeamEvent,
       minNumberOfTeamMembers: Number(event.minNumberOfTeamMembers) || undefined,
@@ -186,7 +191,14 @@ export default function EditEventForm({ event }: Props) {
         "acceptingRegistrations",
         data.acceptingRegistrations.toString()
       );
-      formData.append("imageData", data.imageData);
+
+      // Include the existing imageKey if no new image has been uploaded
+      // or the new imageData if a new image has been uploaded
+      const imageValue = data.imageData.startsWith("data:")
+        ? data.imageData // New image uploaded (base64)
+        : event.imageKey || data.imageData; // Keep existing key
+
+      formData.append("imageData", imageValue);
       formData.append("description", data.description);
       formData.append("isTeamEvent", data.isTeamEvent.toString());
 
