@@ -61,6 +61,7 @@ export default function EventsPage() {
     day: number;
     startTime: string;
     endTime: string;
+    venue: string;
   }) => {
     const formData = new FormData();
     formData.append("eventId", editingEvent?._id || "");
@@ -69,6 +70,7 @@ export default function EventsPage() {
     formData.append("day", updatedEventData.day.toString());
     formData.append("startTime", updatedEventData.startTime);
     formData.append("endTime", updatedEventData.endTime);
+    formData.append("venue", updatedEventData.venue);
 
     updateEventMutation.mutate(formData, {
       onSuccess: () => {
