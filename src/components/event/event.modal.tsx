@@ -33,6 +33,13 @@ import {
 } from "../ui/select";
 
 const DAYS = [1, 2, 3];
+const CATEGORIES = [
+  "Creative Arts",
+  "Music",
+  "Dance",
+  "Theatre",
+  "Culture and Lifestyle",
+];
 
 const eventSchema = z
   .object({
@@ -46,6 +53,7 @@ const eventSchema = z
       .string()
       .regex(/^\d{2}:\d{2}$/, "End time must be in HH:MM format"),
     venue: z.string().min(1, "Venue is required"),
+    category: z.string().min(1, "Category is required"),
   })
   .refine(
     (data) => {
@@ -89,6 +97,7 @@ export function EventModal({
       startTime: initialData?.startTime || "00:00",
       endTime: initialData?.endTime || "01:00",
       venue: initialData?.venue || "",
+      category: initialData?.category || "",
     },
   });
 
@@ -101,6 +110,7 @@ export function EventModal({
         startTime: initialData?.startTime || "00:00",
         endTime: initialData?.endTime || "01:00",
         venue: initialData?.venue || "",
+        category: initialData?.category || "",
       });
     }
   }, [isOpen, initialData, form]);
@@ -236,6 +246,35 @@ export function EventModal({
                   <FormControl>
                     <Input type="text" placeholder="Enter venue" {...field} />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="category"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Category</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    value={field.value}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {CATEGORIES.map((category) => (
+                        <SelectItem key={category} value={category}>
+                          {category}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}

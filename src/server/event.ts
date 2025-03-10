@@ -98,8 +98,17 @@ export async function addEvent(formData: FormData) {
     const startTime = formData.get("startTime") as string;
     const endTime = formData.get("endTime") as string;
     const venue = formData.get("venue") as string;
+    const category = formData.get("category") as string;
 
-    if (!name || !owner || !day || !startTime || !endTime) {
+    if (
+      !name ||
+      !owner ||
+      !day ||
+      !startTime ||
+      !endTime ||
+      !venue ||
+      !category
+    ) {
       throw new Error("All fields are required");
     }
 
@@ -111,6 +120,7 @@ export async function addEvent(formData: FormData) {
       startTime,
       endTime,
       venue,
+      category,
     });
 
     if (existingEvent) {
@@ -124,6 +134,7 @@ export async function addEvent(formData: FormData) {
       startTime,
       endTime,
       venue,
+      category,
     });
 
     revalidatePath("/dashboard/events");
@@ -148,7 +159,7 @@ export async function updateEvent(formData: FormData) {
     const startTime = formData.get("startTime") as string;
     const endTime = formData.get("endTime") as string;
     const venue = formData.get("venue") as string;
-
+    const category = formData.get("category") as string;
     if (
       !eventId ||
       !name ||
@@ -156,7 +167,8 @@ export async function updateEvent(formData: FormData) {
       !day ||
       !startTime ||
       !endTime ||
-      !venue
+      !venue ||
+      !category
     ) {
       throw new Error("Required fields are missing");
     }
@@ -164,7 +176,7 @@ export async function updateEvent(formData: FormData) {
     const existingEvent = await Event.findOne({
       $and: [
         { _id: { $ne: eventId } },
-        { name, day, startTime, endTime, venue },
+        { name, day, startTime, endTime, venue, category },
       ],
     });
 
@@ -181,6 +193,7 @@ export async function updateEvent(formData: FormData) {
         startTime,
         endTime,
         venue,
+        category,
       },
       { new: true }
     );

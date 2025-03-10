@@ -38,6 +38,7 @@ export default function EventsPage() {
     startTime: string;
     endTime: string;
     venue: string;
+    category: string;
   }) => {
     const formData = new FormData();
     formData.append("name", newEventData.name);
@@ -46,6 +47,7 @@ export default function EventsPage() {
     formData.append("startTime", newEventData.startTime);
     formData.append("endTime", newEventData.endTime);
     formData.append("venue", newEventData.venue);
+    formData.append("category", newEventData.category);
 
     addEventMutation.mutate(formData, {
       onSuccess: () => {
@@ -62,6 +64,7 @@ export default function EventsPage() {
     startTime: string;
     endTime: string;
     venue: string;
+    category: string;
   }) => {
     const formData = new FormData();
     formData.append("eventId", editingEvent?._id || "");
@@ -71,6 +74,7 @@ export default function EventsPage() {
     formData.append("startTime", updatedEventData.startTime);
     formData.append("endTime", updatedEventData.endTime);
     formData.append("venue", updatedEventData.venue);
+    formData.append("category", updatedEventData.category);
 
     updateEventMutation.mutate(formData, {
       onSuccess: () => {
@@ -138,6 +142,7 @@ export default function EventsPage() {
               <TableHead>Start Time</TableHead>
               <TableHead>End Time</TableHead>
               <TableHead>Venue</TableHead>
+              <TableHead>Category</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -154,6 +159,7 @@ export default function EventsPage() {
                 <TableCell>{event.startTime}</TableCell>
                 <TableCell>{event.endTime}</TableCell>
                 <TableCell>{event.venue}</TableCell>
+                <TableCell>{event.category}</TableCell>
                 <TableCell className="text-right space-x-2">
                   <Button
                     variant="outline"

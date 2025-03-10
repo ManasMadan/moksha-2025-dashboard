@@ -37,6 +37,7 @@ export interface IEvent extends Document {
   createdAt: Date;
   updatedAt: Date;
   customInputs: ICustomInput[];
+  category: string;
 }
 
 const EventSchema = new mongoose.Schema<IEvent>(
@@ -130,6 +131,17 @@ const EventSchema = new mongoose.Schema<IEvent>(
         },
       ],
       default: [],
+    },
+    category: {
+      type: String,
+      required: true,
+      enum: [
+        "Creative Arts",
+        "Music",
+        "Dance",
+        "Theatre",
+        "Culture and Lifestyle",
+      ],
     },
   },
   { timestamps: true }
