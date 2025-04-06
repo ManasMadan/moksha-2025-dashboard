@@ -19,6 +19,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { updateEventSociety } from "@/server/event";
+import { Textarea } from "../ui/textarea";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
@@ -300,7 +301,7 @@ export default function EditEventForm({ event }: Props) {
               <FormItem>
                 <FormLabel>Description</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter description" {...field} />
+                  <Textarea placeholder="Enter description" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
