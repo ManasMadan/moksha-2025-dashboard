@@ -7,6 +7,7 @@ import Event from "@/models/Event";
 import { revalidatePath } from "next/cache";
 import { Client } from "minio";
 import { randomUUID } from "crypto";
+import EventRegistration from "@/models/EventRegistration";
 
 const minioClient = new Client({
   endPoint: process.env.MINIO_ENDPOINT || "localhost",
@@ -356,6 +357,33 @@ export async function getEventById(id: string) {
     }
 
     return { success: true, data: JSON.stringify(event) };
+  } catch (error) {
+    return { success: false, message: (error as Error).message };
+  }
+}
+
+export async function getEventRegById(id: string) {
+  try {
+    const session = await getMyServerSession();
+    const event = await Event.findById(id);
+    if (!hasPermission(session.user, "events", "view_registrations", event))
+      throw new Error("Unauthorized");
+
+    await connectDB();
+    const registrations = await EventRegistration.find({ eventId: id })
+      .populate({
+        path: "eventId",
+        model: "Event",
+        select:
+          "name day startTime endTime venue category description customInputs",
+      })
+      .exec();
+
+    if (!registrations) {
+      throw new Error("Registrations not found");
+    }
+
+    return { success: true, data: JSON.stringify(registrations) };
   } catch (error) {
     return { success: false, message: (error as Error).message };
   }

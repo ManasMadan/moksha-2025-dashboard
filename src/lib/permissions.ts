@@ -31,7 +31,14 @@ type Permissions = {
   };
   events: {
     dataType: BaseEvent;
-    action: "create" | "update" | "list" | "delete" | "view" | "update_soc";
+    action:
+      | "create"
+      | "update"
+      | "list"
+      | "delete"
+      | "view"
+      | "update_soc"
+      | "view_registrations";
   };
 };
 
@@ -47,6 +54,7 @@ const ROLES = {
       list: true,
       update_soc: (user, event) => event.owner.toString() === user.id,
       view: true,
+      view_registrations: (user, event) => event.owner.toString() === user.id,
     },
   },
   EM: {
