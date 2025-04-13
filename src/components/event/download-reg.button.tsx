@@ -41,10 +41,45 @@ export default function DownloadRegButton({ eventId }: { eventId: string }) {
 function generateCSV(regArray: any[]): string {
   if (regArray.length === 0) return "";
 
-  // Extract custom input labels from the first registration's event
-  const customInputLabels = regArray[0].eventId.customInputs.map(
-    (input: any) => input.label
-  );
+  // Collect all unique custom input labels across all registrations
+  const allCustomInputLabels = new Set<string>();
+
+  // Track the maximum number of unlabeled inputs in any registration
+  let maxUnlabeledInputs = 0;
+
+  regArray.forEach((reg) => {
+    if (reg.eventId && reg.eventId.customInputs) {
+      reg.eventId.customInputs.forEach((input: any) => {
+        if (input.label) {
+          allCustomInputLabels.add(input.label);
+        }
+      });
+    }
+
+    // Count unlabeled inputs
+    if (reg.customInputValues) {
+      let unlabeledCount = 0;
+      reg.customInputValues.forEach((inputValue: any) => {
+        const hasMatchingLabel = reg.eventId?.customInputs?.some(
+          (input: any) => input._id === inputValue.inputId && input.label
+        );
+
+        if (!hasMatchingLabel) {
+          unlabeledCount++;
+        }
+      });
+
+      maxUnlabeledInputs = Math.max(maxUnlabeledInputs, unlabeledCount);
+    }
+  });
+
+  // Convert Set to Array for consistent ordering
+  const customInputLabels = Array.from(allCustomInputLabels);
+
+  // Create headers for unlabeled inputs
+  const unlabeledHeaders = Array(maxUnlabeledInputs)
+    .fill(0)
+    .map((_, i) => `Unlabeled Input ${i + 1}`);
 
   // Create headers
   const headers = [
@@ -57,6 +92,7 @@ function generateCSV(regArray: any[]): string {
     "Age",
     "Registration Date",
     ...customInputLabels,
+    ...unlabeledHeaders,
   ];
 
   // Create CSV rows
@@ -66,35 +102,55 @@ function generateCSV(regArray: any[]): string {
 
     // Map custom input values to their corresponding labels
     const customValues: { [key: string]: string } = {};
+    const unlabeledInputs: string[] = [];
+
+    // Get the custom input labels specific to this registration
+    const regCustomLabels =
+      reg.eventId?.customInputs?.map((input: any) => ({
+        id: input._id,
+        label: input.label,
+      })) || [];
 
     // Find custom input values
-    reg.customInputValues.forEach((inputValue: any) => {
-      // Find the matching custom input from eventId.customInputs
-      const matchingInput = reg.eventId.customInputs.find(
-        (input: any) => input._id === inputValue.inputId
-      );
+    if (reg.customInputValues) {
+      reg.customInputValues.forEach((inputValue: any) => {
+        // Find the matching custom input from this registration's customInputs
+        const matchingInput = regCustomLabels.find(
+          (input: any) => input.id === inputValue.inputId
+        );
 
-      if (matchingInput) {
-        customValues[matchingInput.label] = inputValue.value;
-      }
-    });
+        if (matchingInput && matchingInput.label) {
+          customValues[matchingInput.label] = inputValue.value;
+        } else {
+          // Add to unlabeled inputs
+          unlabeledInputs.push(inputValue.value || "");
+        }
+      });
+    }
 
     // Create row with standard fields
     const row = [
-      reg._id,
-      member.name,
-      member.email,
-      member.phone,
-      member.college,
-      member.yearOfPassing,
-      member.age,
-      new Date(reg.registrationDate).toLocaleDateString(),
+      reg._id || "",
+      member?.name || "",
+      member?.email || "",
+      member?.phone || "",
+      member?.college || "",
+      member?.yearOfPassing || "",
+      member?.age || "",
+      reg.registrationDate
+        ? new Date(reg.registrationDate).toLocaleDateString()
+        : "",
     ];
 
     // Add custom input values in the same order as headers
-    customInputLabels.forEach((label: any) => {
+    customInputLabels.forEach((label: string) => {
       row.push(customValues[label] || "");
     });
+
+    // Add unlabeled inputs in their own columns
+    for (let i = 0; i < maxUnlabeledInputs; i++) {
+      row.push(unlabeledInputs[i] || "");
+    }
 
     return row;
   });
