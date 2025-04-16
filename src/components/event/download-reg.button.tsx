@@ -120,14 +120,27 @@ function generateCSV(regArray: any[]): string {
         );
 
         if (matchingInput && matchingInput.label) {
-          customValues[matchingInput.label] = inputValue.value;
+          // If there's a fileUrl, include it with the file name
+          if (inputValue.fileUrl) {
+            const fileUrl = inputValue.fileUrl.split("?")[0]; // Remove query parameters
+            customValues[
+              matchingInput.label
+            ] = `${inputValue.value} (${fileUrl})`;
+          } else {
+            customValues[matchingInput.label] = inputValue.value;
+          }
         } else {
-          // Add to unlabeled inputs
-          unlabeledInputs.push(inputValue.value || "");
+          // Add to unlabeled inputs, including fileUrl if available
+          if (inputValue.fileUrl) {
+            unlabeledInputs.push(
+              `${inputValue.value || ""} (${inputValue.fileUrl})`
+            );
+          } else {
+            unlabeledInputs.push(inputValue.value || "");
+          }
         }
       });
     }
-
     // Create row with standard fields
     const row = [
       reg._id || "",
